@@ -61,7 +61,7 @@ contract Manager {
   function liquidate(address user) public {
     require(collatRatio(user) < MIN_COLLAT_RATIO);
     shUSD.burn(user, address2minted[user]);
-    weth.transfer(user, address2deposit[user]);
+    weth.transfer(msg.sender, address2deposit[user]);
     address2deposit[user] = 0;
     address2minted[user] = 0;
   }
