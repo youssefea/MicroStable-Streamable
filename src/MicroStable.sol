@@ -41,12 +41,6 @@ contract Manager {
     address2deposit[msg.sender] += amount;
   }
 
-  function withdraw(uint amount) public {
-    address2deposit[msg.sender] -= amount;
-    require(collatRatio(msg.sender) >= MIN_COLLAT_RATIO);
-    weth.transfer(msg.sender, amount);
-  }
-
   function burn(uint amount) public {
     address2minted[msg.sender] -= amount;
     shUSD.burn(msg.sender, amount);
@@ -56,6 +50,12 @@ contract Manager {
     address2minted[msg.sender] += amount;
     require(collatRatio(msg.sender) >= MIN_COLLAT_RATIO);
     shUSD.mint(msg.sender, amount);
+  }
+
+  function withdraw(uint amount) public {
+    address2deposit[msg.sender] -= amount;
+    require(collatRatio(msg.sender) >= MIN_COLLAT_RATIO);
+    weth.transfer(msg.sender, amount);
   }
 
   function liquidate(address user) public {
