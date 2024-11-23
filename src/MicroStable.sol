@@ -1,15 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-// import {SimpleERC20} from "./ERC20.sol";
+import {ERC20} from "lib/solmate/src/tokens/ERC20.sol";
 
-// contract shUSD is SimpleERC20("Shafu USD", "shUSD", 18, 0) {}
+contract ShUSD is ERC20("Shafu USD", "shUSD", 18) {
+  address public manager;
 
-contract MicroStable {
-  mapping(address => uint256) public deposit;
-  mapping(address => uint256) public minted;
+  constructor(address _manager) { manager = _manager; }
 
-  constructor() {
+  modifier onlyManager() {
+    require(manager == msg.sender);
+    _;
+  }
 
+  function mint(address to,   uint amount) public onlyManager { _mint(to,   amount); }
+  function burn(address from, uint amount) public onlyManager { _burn(from, amount); }
+}
+
+contract Manager {
+  ERC20 public weth;
+  ShUSD public shUSD;
+
+  mapping(address => uint) public deposit;
+  mapping(address => uint) public minted;
+
+  constructor(address _weth, address _shUSD) {
+    weth  = ERC20(_weth);
+    shUSD = ShUSD(_shUSD);
   }
 }
