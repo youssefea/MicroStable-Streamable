@@ -67,9 +67,9 @@ contract Manager {
   }
 
   function collatRatio(address user) public view returns (uint) {
-    uint mintedShusd = address2minted[user];
-    if (mintedShusd == 0) return type(uint256).max;
+    uint minted = address2minted[user];
+    if (minted == 0) return type(uint256).max;
     uint totalValue = address2deposit[user] * oracle.latestAnswer() / 1e18;
-    return totalValue / mintedShusd;
+    return totalValue / minted;
   }
 }
