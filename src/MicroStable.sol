@@ -3,6 +3,8 @@ pragma solidity ^0.8.13;
 
 import {ERC20} from "lib/solmate/src/tokens/ERC20.sol";
 
+interface Oracle { function latestAnswer() external view returns (uint); }
+
 contract ShUSD is ERC20("Shafu USD", "shUSD", 18) {
   address public manager;
 
@@ -18,14 +20,29 @@ contract ShUSD is ERC20("Shafu USD", "shUSD", 18) {
 }
 
 contract Manager {
-  ERC20 public weth;
-  ShUSD public shUSD;
+  ERC20  public weth;
+  ShUSD  public shUSD;
 
-  mapping(address => uint) public deposit;
-  mapping(address => uint) public minted;
+  Oracle public oracle;
 
-  constructor(address _weth, address _shUSD) {
-    weth  = ERC20(_weth);
-    shUSD = ShUSD(_shUSD);
+  mapping(address => uint) public address2deposit;
+  mapping(address => uint) public address2minted;
+
+  constructor(address _weth, address _shUSD, address _oracle) {
+    weth   = ERC20(_weth);
+    shUSD  = ShUSD(_shUSD);
+    oracle = Oracle(_oracle);
+  }
+
+  function deposit(uint amount) public {
+    weth.transferFrom(msg.sender, address(this), amount);
+    address2deposit[msg.sender] += amount;
+  }
+
+  function collatRatio() public view returns (uint) {
+    uint mintedDyad = address2minted[msg.sender];
+    if (mintedDyad == 0) return type(uint256).max;
+    uint totalValue = address2deposit[msg.sender] * oracle.latestAnswer() / 1e18;
+    return totalValue / mintedDyad;
   }
 }
