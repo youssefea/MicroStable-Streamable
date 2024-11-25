@@ -2,10 +2,14 @@
 pragma solidity ^0.8.13;
 
 import {ERC20} from "lib/solmate/src/tokens/ERC20.sol";
+import { CustomSuperTokenBase } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/CustomSuperTokenBase.sol";
+import { UUPSProxy } from "@superfluid-finance/ethereum-contracts/contracts/upgradability/UUPSProxy.sol";
+import { ISuperToken, ISuperTokenFactory, IERC20 } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+
 
 interface Oracle { function latestAnswer() external view returns (uint); }
 
-contract ShUSD is ERC20("Shafu USD", "shUSD", 18) {
+contract ShUSD is ERC20("Shafu USD", "shUSD", 18), CustomSuperTokenBase, UUPSProxy {
   address public manager;
 
   constructor(address _manager) { manager = _manager; }
@@ -17,6 +21,24 @@ contract ShUSD is ERC20("Shafu USD", "shUSD", 18) {
 
   function mint(address to,   uint amount) public onlyManager { _mint(to,   amount); }
   function burn(address from, uint amount) public onlyManager { _burn(from, amount); }
+
+  function initialize(
+		ISuperTokenFactory factory
+	) external {
+		// This call to the factory invokes `UUPSProxy.initialize`, which connects the proxy to the canonical SuperToken implementation.
+		// It also emits an event which facilitates discovery of this token.
+		ISuperTokenFactory(factory).initializeCustomSuperToken(address(this));
+
+		// This initializes the token storage and sets the `initialized` flag of OpenZeppelin Initializable.
+		// This makes sure that it will revert if invoked more than once.
+		ISuperToken(address(this)).initialize(
+			IERC20(address(0)),
+			18,
+			ERC20(address(this)).name(),
+			ERC20(address(this)).symbol()
+		);
+	}
+
 }
 
 contract Manager {
@@ -30,7 +52,7 @@ contract Manager {
   mapping(address => uint) public address2deposit;
   mapping(address => uint) public address2minted;
 
-  constructor(address _weth, address _shUSD, address _oracle) {
+  constructor(address _weth, address payable _shUSD, address _oracle) {
     weth   = ERC20(_weth);
     shUSD  = ShUSD(_shUSD);
     oracle = Oracle(_oracle);
