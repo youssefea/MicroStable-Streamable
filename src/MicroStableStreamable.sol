@@ -35,7 +35,7 @@ contract ShUSD is ERC20("Shafu USD", "shUSD", 18), CustomSuperTokenBase, UUPSPro
 		// This makes sure that it will revert if invoked more than once.
 		ISuperToken(address(this)).initialize(
 			IERC20(address(0)),
-			18,
+			ERC20(address(this)).decimals(),
 			ERC20(address(this)).name(),
 			ERC20(address(this)).symbol()
 		);
