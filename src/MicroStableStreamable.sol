@@ -12,7 +12,9 @@ interface Oracle { function latestAnswer() external view returns (uint); }
 contract ShUSD is ERC20("Shafu USD", "shUSD", 18), CustomSuperTokenBase, UUPSProxy {
   address public manager;
 
-  constructor(address _manager) { manager = _manager; }
+  constructor(address _manager) { 
+    require(ERC20(address(this)).decimals() == 18, "Decimals must be 18");
+    manager = _manager; }
 
   modifier onlyManager() {
     require(manager == msg.sender);
